@@ -1,15 +1,11 @@
 #ifndef NODO_H
 #define NODO_H
 
-/**
- * Clase Nodo: representa una intersección vial.
- * Cada nodo tiene un identificador único y coordenadas UTM (latitud, longitud).
- */
 class Nodo {
 private:
     int identificador;
-    double latitud;   // Coordenada Y (proyección UTM, en metros)
-    double longitud;  // Coordenada X (proyección UTM, en metros)
+    double latitud;
+    double longitud;
 
 public:
     Nodo() : identificador(-1), latitud(0.0), longitud(0.0) {}
@@ -22,4 +18,4 @@ public:
     double obtenerLongitud() const { return longitud; }
 };
 
-#endif // NODO_H
+#endif

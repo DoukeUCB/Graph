@@ -6,10 +6,6 @@
 #include "Grafo.h"
 #include "Algoritmos.h"
 
-/**
- * Función auxiliar para medir tiempo de ejecución.
- * Usa chrono::high_resolution_clock para precisión en milisegundos.
- */
 template<typename Funcion>
 double medirTiempo(Funcion funcion) {
     auto inicio = std::chrono::high_resolution_clock::now();
@@ -19,9 +15,6 @@ double medirTiempo(Funcion funcion) {
     return duracion.count();
 }
 
-/**
- * Formatea segundos a un string legible (ej: "2 min 34.5 seg")
- */
 std::string formatearTiempo(double segundos) {
     if (segundos < 60) {
         return std::to_string(segundos) + " seg";
@@ -32,16 +25,9 @@ std::string formatearTiempo(double segundos) {
            std::to_string(segs).substr(0, 5) + " seg";
 }
 
-// ====================================================================
-// Variable global para la componente gigante (compartida entre objetivos)
-// ====================================================================
 static Algoritmos::ResultadoComponentes resultadoComponentes;
 static bool componentesCalculadas = false;
 
-/**
- * Asegura que las componentes conexas estén calculadas.
- * Se calcula una sola vez y se reutiliza.
- */
 void asegurarComponentes(const Grafo& grafo) {
     if (!componentesCalculadas) {
         std::cout << "\n  [Calculando componentes conexas primero...]\n";
@@ -54,17 +40,13 @@ void asegurarComponentes(const Grafo& grafo) {
     }
 }
 
-// ====================================================================
-// FUNCIONES PARA CADA OBJETIVO
-// ====================================================================
-
 void ejecutarObjetivo1(const Grafo& grafo) {
     std::cout << "\n========================================" << std::endl;
     std::cout << " OBJETIVO 1: ALCANCE VEHICULAR (5 km)" << std::endl;
     std::cout << "========================================\n" << std::endl;
 
     int nodoOrigen = 0;
-    double distanciaMaxima = 5000.0; // 5 km en metros
+    double distanciaMaxima = 5000.0;
 
     std::cout << "  Nodo origen: " << nodoOrigen << std::endl;
     std::cout << "  Distancia maxima: " << distanciaMaxima / 1000.0 << " km\n" << std::endl;
@@ -165,15 +147,13 @@ void ejecutarObjetivo5(const Grafo& grafo) {
 
     asegurarComponentes(grafo);
 
-    // Seleccionar dos nodos aleatorios de la componente gigante
     const auto& nodosGigante = resultadoComponentes.nodosComponenteGigante;
-    std::mt19937 generador(42); // Semilla fija para reproducibilidad
+    std::mt19937 generador(42);
     std::uniform_int_distribution<int> distribucion(0, (int)nodosGigante.size() - 1);
 
     int nodoOrigen  = nodosGigante[distribucion(generador)];
     int nodoDestino = nodosGigante[distribucion(generador)];
 
-    // Asegurar que sean diferentes
     while (nodoDestino == nodoOrigen) {
         nodoDestino = nodosGigante[distribucion(generador)];
     }
@@ -191,7 +171,6 @@ void ejecutarObjetivo5(const Grafo& grafo) {
 
     std::cout << "\n  RESULTADO:\n" << std::endl;
 
-    // --- Ruta optimizada por distancia ---
     std::cout << "  --- Ruta mas CORTA (optimizada por distancia) ---" << std::endl;
     if (rutaDistancia.camino.empty()) {
         std::cout << "    No se encontro camino." << std::endl;
@@ -205,7 +184,6 @@ void ejecutarObjetivo5(const Grafo& grafo) {
 
     std::cout << std::endl;
 
-    // --- Ruta optimizada por tiempo ---
     std::cout << "  --- Ruta mas RAPIDA (optimizada por tiempo) ---" << std::endl;
     if (rutaTiempo.camino.empty()) {
         std::cout << "    No se encontro camino." << std::endl;
@@ -217,7 +195,6 @@ void ejecutarObjetivo5(const Grafo& grafo) {
         std::cout << "    Nodos en el camino: " << rutaTiempo.camino.size() << std::endl;
     }
 
-    // --- Análisis comparativo ---
     if (!rutaDistancia.camino.empty() && !rutaTiempo.camino.empty()) {
         std::cout << "\n  --- ANALISIS COMPARATIVO ---" << std::endl;
 
@@ -252,16 +229,12 @@ void ejecutarObjetivo5(const Grafo& grafo) {
               << std::setprecision(3) << tiempoEjecucion << " seg" << std::endl;
 }
 
-// ====================================================================
-// FUNCIÓN PRINCIPAL
-// ====================================================================
 int main() {
     std::cout << "==================================================" << std::endl;
     std::cout << "  RUTAS OPTIMAS EN RED VIAL URBANA - BOLIVIA" << std::endl;
     std::cout << "  Dataset: OpenStreetMap/Geofabrik" << std::endl;
     std::cout << "==================================================" << std::endl;
 
-    // --- Cargar el grafo ---
     std::cout << "\nCargando dataset...\n" << std::endl;
 
     Grafo grafo;
@@ -272,7 +245,6 @@ int main() {
     std::cout << "\n  Tiempo de carga: " << std::fixed << std::setprecision(2)
               << tiempoCarga << " seg\n" << std::endl;
 
-    // --- Menú principal ---
     int opcion = -1;
     while (opcion != 0) {
         std::cout << "\n--------------------------------------------------" << std::endl;
