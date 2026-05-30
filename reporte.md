@@ -62,6 +62,37 @@ Peso 2 = tiempo en segundos = distancia / (velocidad / 3.6)
 Si `oneway=0`, la arista se agrega en **ambos sentidos** (A→B y B→A).  
 Si `oneway=1`, la arista se agrega solo en **un sentido** (A→B).
 
+## 2.1 Procesamiento y Limpieza de Datos
+
+El procesamiento inicial del dataset se realizó en dos fases principales mediante scripts de Python, priorizando la eficiencia computacional a través de operaciones vectoriales y asegurando la consistencia de los atributos necesarios para el cálculo de pesos.
+
+### Extracción y Vectorización de la Red
+Para generar los archivos CSV finales a partir del *shapefile* (`.shp`), se desarrolló un script optimizado (`process.py`) que evita los bucles tradicionales para procesar la información de forma más eficiente:
+
+* **Filtrado de geometrías:** Se descartaron registros con geometrías nulas y se conservaron estrictamente aquellas de tipo `LineString` para asegurar la validez de los segmentos.
+* **Eliminación de duplicados:** Se limpió el dataset conservando solo la primera aparición de cada identificador vial (`osm_id`), eliminando segmentos redundantes de la red.
+* **Generación de Nodos y Aristas:** Utilizando bibliotecas como `geopandas`, `pandas` y `numpy`, se extrajeron las coordenadas de inicio y fin de cada segmento de forma vectorial. Esto permitió mapear nodos únicos y construir las relaciones de adyacencia (aristas) rápidamente.
+
+### Limpieza e Imputación de Velocidades
+Dado que el cálculo de la ruta más rápida depende de la velocidad máxima de cada vía, se identificó la ausencia de este atributo (`maxspeed`) en una gran parte del dataset original. Para solucionarlo, se implementó un segundo pipeline de limpieza (`max_speed_impute.py`):
+
+* **Estandarización inicial:** Se forzó la conversión de la columna `maxspeed` a valores numéricos, transformando cadenas de texto irregulares a nulos y unificando las ausencias de datos a un valor de 0.
+* **Imputación basada en la mediana:** Para los segmentos sin velocidad definida, se calculó e imputó la mediana correspondiente a su clasificación de vía (`fclass`), tomando en cuenta exclusivamente los registros válidos (velocidad > 0).
+
+**Resultados de la imputación:**
+De los 588,902 registros procesados, el algoritmo logró imputar con éxito la velocidad en 522,677 aristas. No obstante, 1,170 casos quedaron sin resolver debido a la ausencia total de referencias válidas para calcular la mediana en su respectiva clasificación.
+
+| Clasificación (`fclass`) | Registros sin imputar |
+|--------------------------|-----------------------|
+| `track_grade1`           | 583                   |
+| `cycleway`               | 560                   |
+| `bridleway`              | 14                    |
+| `unknown`                | 8                     |
+| `busway`                 | 5                     |
+
+**Tratamiento Manual:**
+Para corregir los 1,170 registros detallados en la tabla superior, se procedió con una asignación manual. Los valores de velocidad máxima se introdujeron considerando las características de este tipo de caminos y la normativa de tránsito aplicable al contexto vial de Bolivia.
+
 ---
 
 ## 3. Objetivos
