@@ -173,6 +173,42 @@ En lugar de actualizar la prioridad de un nodo en la cola (operación costosa qu
 **Complejidad:** O((V + E) × log V)  
 Pero en la práctica, el corte a 5 km reduce drásticamente los nodos explorados.
 
+### Pseudocódigo
+
+```text
+Función AlcanceVehicular(Grafo, nodoOrigen, maxDistancia):
+    Crear ColaDePrioridad minHeap
+    Crear Arreglo distancias inicializado en INFINITO
+    Crear Arreglo procesado inicializado en FALSO
+    
+    distancias[nodoOrigen] = 0
+    minHeap.insertar(distancia: 0, nodo: nodoOrigen)
+    nodosAlcanzables = 0
+    
+    Mientras minHeap NO esté vacía:
+        (distActual, nodoActual) = minHeap.extraerMinimo()
+        
+        Si procesado[nodoActual] es VERDADERO: 
+            Continuar iteración
+            
+        // Optimización: Si la distancia supera el límite, detenemos la búsqueda
+        Si distActual > maxDistancia: 
+            Romper bucle
+            
+        procesado[nodoActual] = VERDADERO
+        nodosAlcanzables = nodosAlcanzables + 1
+        
+        Para cada vecino en Grafo.obtenerVecinos(nodoActual):
+            Si procesado[vecino] es FALSO:
+                nuevaDist = distActual + vecino.distancia
+                
+                Si nuevaDist < distancias[vecino]:
+                    distancias[vecino] = nuevaDist
+                    minHeap.insertar(distancia: nuevaDist, nodo: vecino)
+                    
+    Retornar nodosAlcanzables
+```
+
 ### 5.2 Objetivo 2 — Islas Viales: BFS
 
 **Algoritmo elegido:** BFS (Breadth-First Search) iterativo.
@@ -192,6 +228,46 @@ Usamos el grafo **no dirigido** (ignorando la dirección de las calles). Esto mo
 
 **Complejidad:** O(V + E) — cada nodo y arista se visita exactamente una vez.
 
+### Pseudocódigo
+
+```text
+Función EncontrarComponentesConexas(Grafo):
+    Crear Arreglo componenteDeNodo inicializado en -1
+    cantidadComponentes = 0
+    tamanoGigante = 0
+    idComponenteGigante = -1
+    
+    Para nodoInicial desde 0 hasta Grafo.TotalNodos - 1:
+        Si componenteDeNodo[nodoInicial] ya tiene componente asignada:
+            Continuar iteración
+            
+        Si nodoInicial no tiene vecinos (nodo aislado):
+            Continuar iteración
+            
+        Crear Cola colaBFS
+        colaBFS.encolar(nodoInicial)
+        componenteDeNodo[nodoInicial] = cantidadComponentes
+        tamanoComponenteActual = 0
+        
+        Mientras colaBFS NO esté vacía:
+            nodoActual = colaBFS.desencolar()
+            tamanoComponenteActual = tamanoComponenteActual + 1
+            
+            Para cada vecino en Grafo.obtenerVecinosNoDirigidos(nodoActual):
+                Si componenteDeNodo[vecino] == -1: // No visitado
+                    componenteDeNodo[vecino] = cantidadComponentes
+                    colaBFS.encolar(vecino)
+        
+        // Actualizar datos si es la componente más grande hasta ahora
+        Si tamanoComponenteActual > tamanoGigante:
+            tamanoGigante = tamanoComponenteActual
+            idComponenteGigante = cantidadComponentes
+            
+        cantidadComponentes = cantidadComponentes + 1
+        
+    Retornar cantidadComponentes, tamanoGigante, y nodos que pertenecen a idComponenteGigante
+```
+
 ### 5.3 Objetivo 3 — Diámetro Vial: Heurística Double-Sweep
 
 **Problema:** El diámetro exacto requiere ejecutar Dijkstra desde **cada nodo**, es decir O(V × (V+E) × log V). Con V = 887K, esto tomaría días.
@@ -210,6 +286,41 @@ Usamos el grafo **no dirigido** (ignorando la dirección de las calles). Esto mo
 Las redes viales tienen una estructura "alargada" (no son grafos aleatorios). El nodo más lejano desde cualquier extremo tiende a estar en el otro extremo del grafo. La heurística converge en 2-3 iteraciones.
 
 **Complejidad:** O(k × (V + E) × log V), con k = 3 iteraciones.
+
+### Pseudocódigo
+
+```text
+Función CalcularDiametroVial(Grafo, componenteGigante):
+    nodoActual = componenteGigante[primer_elemento]
+    mejorDistancia = 0
+    mejorNodoA = nodoActual
+    mejorNodoB = nodoActual
+    
+    // Se realizan 3 iteraciones de la heurística
+    Para iteración desde 1 hasta 3:
+        // Se ejecuta Dijkstra clásico desde el nodo actual
+        distancias = EjecutarDijkstra(Grafo, nodoActual)
+        
+        nodoMasLejano = nodoActual
+        distanciaMaxima = 0
+        
+        // Encontrar el nodo que quedó más lejos
+        Para cada nodo en componenteGigante:
+            Si distancias[nodo] < INFINITO Y distancias[nodo] > distanciaMaxima:
+                distanciaMaxima = distancias[nodo]
+                nodoMasLejano = nodo
+                
+        // Actualizar el diámetro encontrado
+        Si distanciaMaxima > mejorDistancia:
+            mejorDistancia = distanciaMaxima
+            mejorNodoA = nodoActual
+            mejorNodoB = nodoMasLejano
+            
+        // El nodo más lejano se convierte en el origen para la siguiente iteración
+        nodoActual = nodoMasLejano
+        
+    Retornar mejorNodoA, mejorNodoB, mejorDistancia
+```
 
 ### 5.4 Objetivo 4 — Red de Emergencia: Kruskal con Union-Find
 
@@ -248,6 +359,38 @@ unir(x, y):
 4. Parar cuando el MST tenga V-1 aristas.
 
 **Complejidad:** O(E × log E) dominado por el ordenamiento.
+
+### Pseudocódigo
+
+```text
+Función ConstruirMST(Grafo, componenteGigante):
+    Lista aristasComponente = Vacía
+    
+    // 1. Filtrar solo aristas que pertenezcan a la componente gigante
+    Para cada arista en Grafo.todasLasAristas():
+        Si arista.nodoOrigen y arista.nodoDestino están en componenteGigante:
+            aristasComponente.agregar(arista)
+            
+    // 2. Ordenar las aristas por distancia de menor a mayor
+    Ordenar aristasComponente según arista.distancia Ascendente
+    
+    // 3. Aplicar algoritmo de Kruskal
+    Crear Estructura UnionFind(TotalNodos)
+    distanciaTotalMST = 0
+    aristasEnMST = 0
+    aristasNecesarias = Tamaño(componenteGigante) - 1
+    
+    Para cada arista en aristasComponente:
+        Si aristasEnMST >= aristasNecesarias: 
+            Romper bucle // El árbol está completo
+            
+        // Si unir origen y destino no forma un ciclo, agregar al MST
+        Si UnionFind.unir(arista.nodoOrigen, arista.nodoDestino) es EXITOSO:
+            distanciaTotalMST = distanciaTotalMST + arista.distancia
+            aristasEnMST = aristasEnMST + 1
+            
+    Retornar distanciaTotalMST
+```
 
 ### 5.5 Objetivo 5 — Comparación de Rutas: Dijkstra con Pesos Diferentes
 
